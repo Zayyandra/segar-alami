@@ -22,7 +22,7 @@ class UpdateKonversiProdukRequest extends FormRequest
                 'integer',
                 'exists:bahan_baku,id',
                 Rule::unique('konversi_produk', 'bahan_baku_id')
-                    ->where('varian_produk_id', $this->varian_produk_id)
+                    ->where(fn ($query) => $query->where('varian_produk_id', $this->integer('varian_produk_id')))
                     ->ignore($this->route('konversiProduk')),
             ],
             'jumlah_per_satuan' => ['required', 'numeric', 'min:0.0001'],
