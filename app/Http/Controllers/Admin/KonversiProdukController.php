@@ -1,4 +1,5 @@
 <?php
+
 // app/Http/Controllers/Admin/KonversiProdukController.php
 
 namespace App\Http\Controllers\Admin;
@@ -24,16 +25,16 @@ class KonversiProdukController extends Controller
         }
 
         $konversiProduks = $query->paginate(15)->withQueryString();
-        $varianProduks   = VarianProduk::with('produk')->orderBy('produk_id')->get();
+        $varianProduks = VarianProduk::with('produk')->orderBy('produk_id')->get();
 
         return view('admin.konversi-produk.index', compact('konversiProduks', 'varianProduks'));
     }
 
     public function create(): View
     {
-        $konversiProduk = new KonversiProduk();
-        $varianProduks  = VarianProduk::with('produk')->orderBy('produk_id')->get();
-        $bahanBakus     = BahanBaku::where('is_active', true)->orderBy('nama')->get();
+        $konversiProduk = new KonversiProduk;
+        $varianProduks = VarianProduk::with('produk')->orderBy('produk_id')->get();
+        $bahanBakus = BahanBaku::where('is_active', true)->orderBy('nama')->get();
 
         return view('admin.konversi-produk.create', compact('konversiProduk', 'varianProduks', 'bahanBakus'));
     }
@@ -49,7 +50,10 @@ class KonversiProdukController extends Controller
     public function edit(KonversiProduk $konversiProduk): View
     {
         $varianProduks = VarianProduk::with('produk')->orderBy('produk_id')->get();
-        $bahanBakus    = BahanBaku::where('is_active', true)->orderBy('nama')->get();
+        $bahanBakus = BahanBaku::where('is_active', true)
+            ->orWhere('id', $konversiProduk->bahan_baku_id)
+            ->orderBy('nama')
+            ->get();
 
         return view('admin.konversi-produk.edit', compact('konversiProduk', 'varianProduks', 'bahanBakus'));
     }
