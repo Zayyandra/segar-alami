@@ -43,6 +43,7 @@ class KonversiProdukTest extends TestCase
             'nama'        => 'Kacang Kedelai',
             'satuan'      => 'kg',
             'kategori_bb' => 'utama',
+            'is_active'   => true,
         ]);
     }
 
@@ -57,6 +58,17 @@ class KonversiProdukTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('app.konversi-produk.index'))
             ->assertOk();
+    }
+
+    public function test_owner_is_forbidden(): void
+    {
+        Role::create(['name' => 'owner', 'guard_name' => 'web']);
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $this->actingAs($owner)
+            ->get(route('app.konversi-produk.index'))
+            ->assertForbidden();
     }
 
     public function test_admin_can_view_create_form(): void
@@ -78,8 +90,9 @@ class KonversiProdukTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('konversi_produk', [
-            'varian_produk_id' => $this->varian->id,
-            'bahan_baku_id'    => $this->bahanBaku->id,
+            'varian_produk_id'  => $this->varian->id,
+            'bahan_baku_id'     => $this->bahanBaku->id,
+            'jumlah_per_satuan' => 0.1,
         ]);
     }
 
@@ -98,6 +111,8 @@ class KonversiProdukTest extends TestCase
                 'jumlah_per_satuan' => 0.2,
             ])
             ->assertSessionHasErrors('bahan_baku_id');
+
+        $this->assertDatabaseCount('konversi_produk', 1);
     }
 
     public function test_store_rejects_zero_jumlah(): void
@@ -161,7 +176,8 @@ class KonversiProdukTest extends TestCase
                 'bahan_baku_id'     => $this->bahanBaku->id,
                 'jumlah_per_satuan' => 0.15,
             ])
-            ->assertRedirect(route('app.konversi-produk.index'));
+            ->assertRedirect(route('app.konversi-produk.index'))
+            ->assertSessionHas('success');
     }
 
     public function test_admin_can_delete_konversi_produk(): void
