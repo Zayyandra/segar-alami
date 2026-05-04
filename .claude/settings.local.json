@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(php artisan *)",
+      "Bash(./vendor/bin/pint *)",
+      "PowerShell(php vendor/bin/pint app/Models/BahanBaku.php app/Models/KonversiProduk.php app/Models/VarianProduk.php)",
+      "PowerShell(git add *)",
+      "PowerShell(php artisan test --filter=KonversiProdukTest 2>&1)",
+      "PowerShell(& \"C:\\\\Users\\\\ACER\\\\Herd\\\\segar-alami\\\\vendor\\\\bin\\\\pint.bat\" --test \"app/Http/Controllers/Admin/KonversiProdukController.php\" 2>&1)",
+      "PowerShell(& \"C:\\\\Users\\\\ACER\\\\Herd\\\\segar-alami\\\\vendor\\\\bin\\\\pint.bat\" --test \"routes/web.php\" 2>&1)",
+      "Read(//mnt/c/Users/ACER/Herd/**)",
+      "Bash(php vendor/bin/pint routes/web.php app/Http/Controllers/Admin/KonversiProdukController.php)",
+      "PowerShell(php artisan test --filter=KonversiProduk 2>&1)",
+      "PowerShell(php artisan test 2>&1)",
+      "PowerShell(./vendor/bin/pint resources/views/ --test 2>&1)"
+    ]
+  }
+}

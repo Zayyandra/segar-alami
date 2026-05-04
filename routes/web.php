@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BahanMasukController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\KonversiProdukController;
+use App\Http\Controllers\Admin\MasaSimpanController;
 use App\Http\Controllers\Admin\PenjualanController;
 use App\Http\Controllers\Admin\ProdukController;
 use App\Http\Controllers\Admin\SafetyStockController;
@@ -16,7 +17,7 @@ use App\Http\Controllers\Owner\UserManagementController;
 use App\Models\VarianProduk;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('app.dashboard'));
+Route::get('/', fn() => redirect()->route('app.dashboard'));
 
 Route::get('/dashboard', function () {
     return redirect()->route('app.dashboard');
@@ -51,8 +52,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 
         Route::get('api/varian-harga/{varianProduk}', function (VarianProduk $varianProduk) {
             return response()->json([
-                'harga' => $varianProduk->harga,
-                'nama' => $varianProduk->nama_varian,
+                'harga'  => $varianProduk->harga,
+                'nama'   => $varianProduk->nama_varian,
                 'ukuran' => $varianProduk->ukuran,
             ]);
         })->name('api.varian-harga');
@@ -70,6 +71,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->except(['show']);
 
         Route::get('safety-stock', [SafetyStockController::class, 'index'])->name('safety-stock.index');
+        Route::get('masa-simpan', [MasaSimpanController::class, 'index'])
+            ->name('masa-simpan.index');
     });
 
 // Owner only
@@ -84,4 +87,4 @@ Route::middleware(['auth', 'verified', 'role:owner'])
         Route::resource('users', UserManagementController::class)->except(['show']);
     });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
