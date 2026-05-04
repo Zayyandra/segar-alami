@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class VarianProduk extends Model
 {
@@ -30,7 +31,7 @@ class VarianProduk extends Model
         return $this->belongsTo(Produk::class);
     }
 
-    public function konversiProduk(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function konversiProduk(): HasMany
     {
         return $this->hasMany(KonversiProduk::class);
     }

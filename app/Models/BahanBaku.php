@@ -1,8 +1,10 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BahanBaku extends Model
 {
@@ -16,31 +18,34 @@ class BahanBaku extends Model
     ];
 
     protected $casts = [
-        'stok_saat_ini'    => 'decimal:2',
-        'stok_minimum'     => 'decimal:2',
+        'stok_saat_ini' => 'decimal:2',
+        'stok_minimum' => 'decimal:2',
         'harga_per_satuan' => 'decimal:2',
-        'tracking_ss_rop'  => 'boolean',
-        'is_active'        => 'boolean',
+        'tracking_ss_rop' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
-    public function bahanMasuk(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function bahanMasuk(): HasMany
     {
         return $this->hasMany(BahanMasuk::class, 'bahan_baku_id');
     }
 
-    public function bahanKeluar(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function bahanKeluar(): HasMany
     {
         return $this->hasMany(BahanKeluar::class, 'bahan_baku_id');
     }
 
-    public function konversiProduk(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function konversiProduk(): HasMany
     {
-        return $this->hasMany(KonversiProduk::class);
+        return $this->hasMany(KonversiProduk::class, 'bahan_baku_id');
     }
 
     public function getStatusStokAttribute(): string
     {
-        if ($this->stok_minimum <= 0) return 'unknown';
+        if ($this->stok_minimum <= 0) {
+            return 'unknown';
+        }
+
         return $this->stok_saat_ini <= $this->stok_minimum ? 'kritis' : 'aman';
     }
 
@@ -60,17 +65,17 @@ class BahanBaku extends Model
             return ['ss' => null, 'rop' => null, 'D' => null, 'Dmax' => null, 'L' => null, 'Lmax' => null];
         }
 
-        $D    = round($pemakaianPerHari->avg(), 2);
+        $D = round($pemakaianPerHari->avg(), 2);
         $Dmax = round($pemakaianPerHari->max(), 2);
 
         $leadTimes = $this->bahanMasuk()
             ->whereNotNull('lead_time_hari')
             ->pluck('lead_time_hari');
 
-        $L    = $leadTimes->isEmpty() ? 1 : round($leadTimes->avg(), 2);
+        $L = $leadTimes->isEmpty() ? 1 : round($leadTimes->avg(), 2);
         $Lmax = $leadTimes->isEmpty() ? 1 : $leadTimes->max();
 
-        $ss  = round(($Dmax * $Lmax) - ($D * $L), 2);
+        $ss = round(($Dmax * $Lmax) - ($D * $L), 2);
         $rop = round(($D * $L) + $ss, 2);
 
         return compact('ss', 'rop', 'D', 'Dmax', 'L', 'Lmax');
