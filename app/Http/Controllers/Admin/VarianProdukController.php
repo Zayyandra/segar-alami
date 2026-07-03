@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -20,8 +19,8 @@ class VarianProdukController extends Controller
         if ($search = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama_varian', 'like', "%{$search}%")
-                  ->orWhere('ukuran', 'like', "%{$search}%")
-                  ->orWhereHas('produk', fn ($p) => $p->where('nama', 'like', "%{$search}%"));
+                    ->orWhere('ukuran', 'like', "%{$search}%")
+                    ->orWhereHas('produk', fn($p) => $p->where('nama', 'like', "%{$search}%"));
             });
         }
 
@@ -71,6 +70,13 @@ class VarianProdukController extends Controller
 
     public function destroy(VarianProduk $varianProduk): RedirectResponse
     {
+        // Varian yang sudah punya riwayat penjualan tidak boleh dihapus
+        if ($varianProduk->detailPenjualan()->exists()) {
+            return redirect()
+                ->route('app.varian-produk.index')
+                ->with('error', 'Varian tidak dapat dihapus karena sudah memiliki riwayat penjualan. Nonaktifkan saja jika tidak digunakan lagi.');
+        }
+
         $varianProduk->delete();
 
         return redirect()

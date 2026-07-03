@@ -1,11 +1,7 @@
-<x-layouts.admin title="Laporan Masa Simpan">
+<x-layouts.admin title="Laporan Masa Simpan" subtitle="Pemantauan masa simpan bahan baku berdasarkan metode FEFO (First Expired First Out).">
     <div class="space-y-6">
 
         {{-- Header --}}
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Laporan Masa Simpan</h1>
-            <p class="text-sm text-gray-500 mt-1">Pemantauan masa simpan bahan baku berdasarkan metode FEFO (First Expired First Out).</p>
-        </div>
 
         {{-- Stat Cards --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">

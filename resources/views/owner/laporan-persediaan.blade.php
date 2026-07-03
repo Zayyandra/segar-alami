@@ -54,7 +54,8 @@
 
     {{-- Tabel Rincian --}}
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div
+            class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <h3 class="text-sm font-bold text-slate-900">Rincian Persediaan</h3>
             <div class="flex flex-wrap items-center gap-3">
                 <form method="GET" action="{{ route('app.laporan.persediaan') }}" class="flex gap-2">
@@ -67,11 +68,18 @@
                         <input type="search" name="q" value="{{ request('q') }}"
                             placeholder="Cari bahan baku..."
                             class="pl-10 pr-3 py-2 rounded-lg border border-slate-200 text-sm
-                                   focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none">
+                   focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none">
                     </div>
+                    <select name="kategori" onchange="this.form.submit()"
+                        class="px-3 pr-8 py-2 rounded-lg border border-slate-200 text-sm bg-white
+               focus:border-emerald-500 focus:outline-none">
+                        <option value="" @selected($kategori === '')>Semua Kategori</option>
+                        <option value="utama" @selected($kategori === 'utama')>Utama</option>
+                        <option value="pendukung" @selected($kategori === 'pendukung')>Pendukung</option>
+                    </select>
                     <select name="status" onchange="this.form.submit()"
                         class="min-w-[150px] px-3 pr-8 py-2 rounded-lg border border-slate-200 text-sm bg-white
-                               focus:border-emerald-500 focus:outline-none">
+               focus:border-emerald-500 focus:outline-none">
                         <option value="">Semua Status</option>
                         <option value="aman" @selected(request('status') === 'aman')>Aman</option>
                         <option value="kritis" @selected(request('status') === 'kritis')>Kritis</option>
@@ -86,63 +94,76 @@
                     </span>
                 </div>
                 <a href="{{ route('app.laporan.persediaan.pdf') }}"
-                   class="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700
+                    class="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700
                           text-sm font-medium hover:bg-slate-50 transition flex items-center gap-2 whitespace-nowrap">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     Export PDF
                 </a>
             </div>
         </div>
 
-        <table class="w-full">
-            <thead class="bg-slate-50">
-                <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
-                    <th class="px-6 py-3 font-medium">Nama Bahan Baku</th>
-                    <th class="px-6 py-3 font-medium">Stok Saat Ini</th>
-                    <th class="px-6 py-3 font-medium">Stok Minimum</th>
-                    <th class="px-6 py-3 font-medium">Status</th>
-                    <th class="px-6 py-3 font-medium text-right">Nilai Stok</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                @forelse ($bahanBakus as $item)
-                    @php $status = $item->status_stok; @endphp
-                    <tr class="hover:bg-slate-50/50">
-                        <td class="px-6 py-4">
-                            <p class="text-sm font-medium text-slate-900">{{ $item->nama }}</p>
-                            <p class="text-xs text-slate-500">{{ ucfirst($item->kategori_bb) }}</p>
-                        </td>
-                        <td class="px-6 py-4 text-sm {{ $status === 'kritis' ? 'text-red-600 font-semibold' : 'text-slate-700' }}">
-                            {{ number_format($item->stok_saat_ini, 2, ',', '.') }} {{ $item->satuan }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-600">
-                            {{ number_format($item->stok_minimum, 2, ',', '.') }} {{ $item->satuan }}
-                        </td>
-                        <td class="px-6 py-4">
-                            @if ($status === 'aman')
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">Aman</span>
-                            @elseif ($status === 'kritis')
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700">Kritis</span>
-                            @else
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">—</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 text-right text-sm font-medium tabular-nums text-slate-900">
-                            Rp {{ number_format($item->nilai_stok, 0, ',', '.') }}
-                        </td>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[640px]">
+                <thead class="bg-slate-50">
+                    <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                        <th class="px-6 py-3 font-medium">Nama Bahan Baku</th>
+                        <th class="px-6 py-3 font-medium">Stok Saat Ini</th>
+                        <th class="px-6 py-3 font-medium">Stok Minimum</th>
+                        <th class="px-6 py-3 font-medium">Status</th>
+                        <th class="px-6 py-3 font-medium text-right">Nilai Stok</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-sm text-slate-400">
-                            Belum ada data bahan baku.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse ($bahanBakus as $item)
+                        @php
+                            $ss = $batch[$item->id]['ss'] ?? null;
+                            $statusItem = $ss === null ? 'unknown' : ($item->stok_saat_ini <= $ss ? 'kritis' : 'aman');
+                        @endphp
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-medium text-slate-900">{{ $item->nama }}</p>
+                                <p class="text-xs text-slate-500">{{ ucfirst($item->kategori_bb) }}</p>
+                            </td>
+                            <td
+                                class="px-6 py-4 text-sm {{ $statusItem === 'kritis' ? 'text-red-600 font-semibold' : 'text-slate-700' }}">
+                                {{ number_format($item->stok_saat_ini, 2, ',', '.') }} {{ $item->satuan }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-600">
+                                @if ($ss !== null)
+                                    {{ number_format($ss, 2, ',', '.') }} {{ $item->satuan }}
+                                @else
+                                    <span class="text-slate-400 italic text-xs">Belum ada histori</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
+                                @if ($statusItem === 'aman')
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">Aman</span>
+                                @elseif ($statusItem === 'kritis')
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700">Kritis</span>
+                                @else
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">—</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-right text-sm font-medium tabular-nums text-slate-900">
+                                Rp {{ number_format($item->nilai_stok, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-sm text-slate-400">
+                                Belum ada data bahan baku.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         @if ($bahanBakus->hasPages())
             <div class="px-6 py-4 border-t border-slate-100">{{ $bahanBakus->links() }}</div>

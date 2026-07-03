@@ -62,7 +62,7 @@
                                     <a href="{{ route('app.konversi-produk.edit', $item) }}"
                                         class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Edit</a>
                                     <form method="POST" action="{{ route('app.konversi-produk.destroy', $item) }}"
-                                        class="inline" onsubmit="return confirm('Hapus konversi ini?')">
+                                        class="inline" data-confirm="Hapus konversi ini?">
                                         @csrf @method('DELETE')
                                         <button type="submit"
                                             class="text-sm font-medium text-red-500 hover:text-red-600">Hapus</button>

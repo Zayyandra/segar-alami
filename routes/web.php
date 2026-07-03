@@ -9,7 +9,6 @@ use App\Http\Controllers\Admin\KonversiProdukController;
 use App\Http\Controllers\Admin\MasaSimpanController;
 use App\Http\Controllers\Admin\PenjualanController;
 use App\Http\Controllers\Admin\ProdukController;
-use App\Http\Controllers\Admin\SafetyStockController;
 use App\Http\Controllers\Admin\VarianProdukController;
 use App\Http\Controllers\Owner\LaporanPenjualanController;
 use App\Http\Controllers\Owner\LaporanPersediaanController;
@@ -23,7 +22,6 @@ Route::get('/dashboard', function () {
     return redirect()->route('app.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Owner DAN admin
 Route::middleware(['auth', 'verified', 'role:owner|admin'])
     ->prefix('app')
     ->name('app.')
@@ -31,7 +29,6 @@ Route::middleware(['auth', 'verified', 'role:owner|admin'])
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     });
 
-// Admin only
 Route::middleware(['auth', 'verified', 'role:admin'])
     ->prefix('app')
     ->name('app.')
@@ -47,8 +44,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->parameters(['bahan-baku' => 'bahanBaku'])
             ->except(['show']);
 
+        // Penjualan tidak bisa dihapus — destroy dihapus dari route
         Route::resource('penjualan', PenjualanController::class)
-            ->only(['index', 'create', 'store', 'show', 'destroy', 'edit', 'update']);
+            ->only(['index', 'create', 'store', 'show', 'edit', 'update']);
 
         Route::get('api/varian-harga/{varianProduk}', function (VarianProduk $varianProduk) {
             return response()->json([
@@ -70,12 +68,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->parameters(['konversi-produk' => 'konversiProduk'])
             ->except(['show']);
 
-        Route::get('safety-stock', [SafetyStockController::class, 'index'])->name('safety-stock.index');
+
         Route::get('masa-simpan', [MasaSimpanController::class, 'index'])
             ->name('masa-simpan.index');
     });
 
-// Owner only
 Route::middleware(['auth', 'verified', 'role:owner'])
     ->prefix('app')
     ->name('app.')

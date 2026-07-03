@@ -56,10 +56,7 @@
             ],
             [
                 'label' => 'Analitik',
-                'items' => [
-                    ['route' => 'app.safety-stock.index', 'label' => 'Safety Stock & ROP', 'icon' => 'chart'],
-                    ['route' => 'app.masa-simpan.index', 'label' => 'Masa Simpan', 'icon' => 'clock'],
-                ],
+                'items' => [['route' => 'app.masa-simpan.index', 'label' => 'Masa Simpan', 'icon' => 'clock']],
             ],
         ];
     } else {
@@ -77,13 +74,26 @@
             ],
             [
                 'label' => 'Manajemen',
-                'items' => [['route' => 'app.users.index', 'label' => 'User Management', 'icon' => 'users']],
+                'items' => [['route' => 'app.users.index', 'label' => 'Manajemen Pengguna', 'icon' => 'users']],
             ],
         ];
     }
 @endphp
 
-<aside class="w-64 flex flex-col shrink-0 min-h-screen" style="background-color: #1a2035;">
+<aside
+    class="fixed inset-y-0 left-0 z-50 w-64 flex flex-col shrink-0 min-h-screen
+           transform transition-transform duration-200 ease-in-out
+           lg:static lg:translate-x-0"
+    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+    style="background-color: #1a2035;">
+
+    {{-- Tombol tutup (mobile saja) --}}
+    <button type="button" @click="sidebarOpen = false"
+        class="lg:hidden absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
 
     {{-- Logo --}}
     <div class="px-4 py-6 flex justify-center">
@@ -110,10 +120,10 @@
                             $pattern =
                                 $item['route'] === 'app.dashboard'
                                     ? 'app.dashboard'
-                                    : rtrim(
-                                            preg_replace('/\.(index|penjualan|persediaan)$/', '', $item['route']),
-                                            '.',
-                                        ) . '.*';
+                                    : (str_ends_with($item['route'], '.penjualan') ||
+                                    str_ends_with($item['route'], '.persediaan')
+                                        ? $item['route']
+                                        : rtrim(preg_replace('/\.index$/', '', $item['route']), '.') . '.*');
                             $active = $exists && request()->routeIs($pattern);
                             $href = $exists ? route($item['route']) : '#';
                         @endphp
@@ -155,7 +165,7 @@
                 class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium
                        text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-150">
                 <x-admin.icon name="logout" class="w-5 h-5 shrink-0" />
-                <span>Logout</span>
+                <span>Keluar</span>
             </button>
         </form>
     </div>

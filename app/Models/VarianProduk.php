@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,7 +21,7 @@ class VarianProduk extends Model
     ];
 
     protected $casts = [
-        'harga' => 'decimal:2',
+        'harga'     => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
@@ -34,5 +33,9 @@ class VarianProduk extends Model
     public function konversiProduk(): HasMany
     {
         return $this->hasMany(KonversiProduk::class);
+    }
+    public function detailPenjualan(): HasMany
+    {
+        return $this->hasMany(DetailPenjualan::class);
     }
 }

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
@@ -20,7 +19,7 @@ class UserManagementController extends Controller
         if ($search = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -69,8 +68,8 @@ class UserManagementController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'email'    => ['required', 'email', "unique:users,email,{$user->id}"],
+            'name'  => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', "unique:users,email,{$user->id}"],
             'password' => ['nullable', Password::min(8)->letters()->numbers(), 'confirmed'],
             'role'     => ['required', 'exists:roles,name'],
         ], [
@@ -81,8 +80,8 @@ class UserManagementController extends Controller
             'name'  => $request->name,
             'email' => $request->email,
             ...(filled($request->password)
-                ? ['password' => Hash::make($request->password)]
-                : []),
+                    ? ['password' => Hash::make($request->password)]
+                    : []),
         ]);
 
         $user->syncRoles([$request->role]);
@@ -97,6 +96,15 @@ class UserManagementController extends Controller
         // Cegah owner hapus diri sendiri
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
+        }
+
+        // User dengan riwayat aktivitas tidak boleh dihapus (jaga integritas data)
+        $punyaRiwayat = \App\Models\Penjualan::where('user_id', $user->id)->exists()
+        || \App\Models\BahanMasuk::where('user_id', $user->id)->exists()
+        || \App\Models\BahanKeluar::where('user_id', $user->id)->exists();
+
+        if ($punyaRiwayat) {
+            return back()->with('error', 'User tidak dapat dihapus karena memiliki riwayat transaksi. Data historis harus tetap terjaga.');
         }
 
         $user->delete();

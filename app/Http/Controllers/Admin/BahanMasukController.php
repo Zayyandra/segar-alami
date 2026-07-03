@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BahanBaku;
 use App\Models\BahanMasuk;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class BahanMasukController extends Controller
@@ -106,5 +106,11 @@ class BahanMasukController extends Controller
 
         return redirect()->route('app.bahan-masuk.index')
             ->with('success', 'Data bahan masuk dihapus dan stok telah disesuaikan.');
+    }
+    public function edit(BahanMasuk $bahanMasuk): View
+    {
+        $bahanBakus = BahanBaku::where('is_active', true)->orderBy('nama')->get();
+
+        return view('admin.bahan-masuk.edit', compact('bahanBakus', 'bahanMasuk'));
     }
 }

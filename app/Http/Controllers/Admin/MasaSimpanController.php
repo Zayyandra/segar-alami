@@ -12,38 +12,40 @@ class MasaSimpanController extends Controller
     {
         $status = $request->query('status');
 
-        $query = BahanMasuk::with('bahanBaku')
+        $semua = BahanMasuk::with('bahanBaku')
             ->whereNotNull('tanggal_kadaluarsa')
-            ->orderBy('tanggal_kadaluarsa', 'asc');
+            ->orderBy('tanggal_kadaluarsa', 'asc')
+            ->get()
+            ->map(function ($item) {
+                $sisa = today()->diffInDays($item->tanggal_kadaluarsa, false);
+                if ($sisa < 0) {
+                    $item->status       = 'kadaluarsa';
+                    $item->status_label = 'Sudah Kedaluwarsa';
+                    $item->sisa_hari    = abs($sisa) . ' hari lalu';
+                } elseif ($sisa <= 7) {
+                    $item->status       = 'mendekati';
+                    $item->status_label = 'Mendekati Kedaluwarsa';
+                    $item->sisa_hari    = $sisa . ' hari lagi';
+                } else {
+                    $item->status       = 'aman';
+                    $item->status_label = 'Aman';
+                    $item->sisa_hari    = $sisa . ' hari lagi';
+                }
+                return $item;
+            });
 
-        $items = $query->get()->map(function ($item) {
-            $sisa = today()->diffInDays($item->tanggal_kadaluarsa, false);
-            if ($sisa < 0) {
-                $item->status = 'kadaluarsa';
-                $item->status_label = 'Sudah Kedaluwarsa';
-                $item->sisa_hari = abs($sisa) . ' hari lalu';
-            } elseif ($sisa <= 7) {
-                $item->status = 'mendekati';
-                $item->status_label = 'Mendekati Kedaluwarsa';
-                $item->sisa_hari = $sisa . ' hari lagi';
-            } else {
-                $item->status = 'aman';
-                $item->status_label = 'Aman';
-                $item->sisa_hari = $sisa . ' hari lagi';
-            }
-            return $item;
-        });
-
-        if ($status) {
-            $items = $items->filter(fn($i) => $i->status === $status)->values();
-        }
-
+        // Counts dihitung dari data LENGKAP (sebelum filter),
+        // supaya stat card tetap benar saat filter aktif
         $counts = [
-            'semua'    => $items->count(),
-            'kadaluarsa' => $items->where('status', 'kadaluarsa')->count(),
-            'mendekati'  => $items->where('status', 'mendekati')->count(),
-            'aman'       => $items->where('status', 'aman')->count(),
+            'semua'      => $semua->count(),
+            'kadaluarsa' => $semua->where('status', 'kadaluarsa')->count(),
+            'mendekati'  => $semua->where('status', 'mendekati')->count(),
+            'aman'       => $semua->where('status', 'aman')->count(),
         ];
+
+        $items = $status
+            ? $semua->filter(fn ($i) => $i->status === $status)->values()
+            : $semua;
 
         return view('admin.masa-simpan.index', compact('items', 'status', 'counts'));
     }

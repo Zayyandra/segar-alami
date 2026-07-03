@@ -67,7 +67,7 @@
                                        class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Edit</a>
                                     @if ($user->id !== auth()->id())
                                         <form method="POST" action="{{ route('app.users.destroy', $user) }}"
-                                              class="inline" onsubmit="return confirm('Hapus user {{ $user->name }}?')">
+                                              class="inline" data-confirm="Hapus user {{ $user->name }}?">
                                             @csrf @method('DELETE')
                                             <button type="submit"
                                                     class="text-sm font-medium text-red-600 hover:text-red-700">Hapus</button>

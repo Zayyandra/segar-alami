@@ -1,6 +1,6 @@
 <x-layouts.admin title="Dashboard" subtitle="Dashboard Sistem Penjualan dan Persediaan UMKM Segar Alami">
 
-    {{-- Welcome Banner --}}
+    {{-- Selamat Datang --}}
     <div class="bg-gradient-to-r from-emerald-50 via-emerald-50 to-teal-50 border border-emerald-100
                 rounded-2xl px-8 py-5 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="flex items-center gap-4">
@@ -12,16 +12,16 @@
             </div>
             <div>
                 <h2 class="text-lg font-bold text-slate-900">Selamat datang, {{ auth()->user()->name }}</h2>
-                <p class="text-sm text-slate-600">Berikut adalah ringkasan operasional Anda hari ini.</p>
+                <p class="text-sm text-slate-600">Berikut adalah ringkasan operasional hari ini.</p>
             </div>
         </div>
         <div class="text-right shrink-0">
-            <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Operational Hub</p>
+            <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Segar Alami</p>
             <p class="text-sm text-slate-700">{{ now()->translatedFormat('l, d F Y') }}</p>
         </div>
     </div>
 
-    {{-- Expired Alert --}}
+    {{-- Peringatan Kadaluarsa --}}
     @if ($expiredAlert->count())
         <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 mb-6">
             <p class="text-sm font-semibold text-red-700 mb-2">
@@ -48,27 +48,45 @@
         </div>
     @endif
 
-    {{-- Stat Cards --}}
+    {{-- Kartu Statistik --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
+        {{-- Pendapatan Bulan Ini --}}
         <div class="bg-emerald-700 rounded-2xl shadow-md shadow-emerald-200 px-5 py-5">
-            <p class="text-xs text-emerald-300 uppercase tracking-wider mb-2">Pendapatan Bulan Ini</p>
+            <p class="text-xs text-emerald-300 uppercase tracking-wider mb-2">
+                Pendapatan {{ now()->translatedFormat('F Y') }}
+            </p>
             <p class="text-2xl font-bold text-white leading-tight">
                 Rp {{ number_format($pendapatanBulanIni, 0, ',', '.') }}
             </p>
             <p class="text-xs text-emerald-300 mt-2">{{ $transaksiHariIni }} transaksi hari ini</p>
-            <p class="text-xs text-emerald-400 mt-1">Last updated: {{ now()->format('H:i') }}</p>
+            <p class="text-xs text-emerald-400 mt-1">Diperbarui: {{ now()->format('H:i') }}</p>
         </div>
 
+        {{-- Produk Terjual Bulan Ini --}}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-5">
+            <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">
+                Produk Terjual {{ now()->translatedFormat('F') }}
+            </p>
+            <p class="text-2xl font-bold text-slate-900 leading-tight">
+                {{ number_format($produkTerjualBulanIni, 0, ',', '.') }}
+                <span class="text-sm font-medium text-slate-500">Item</span>
+            </p>
+            <p class="text-xs font-medium text-emerald-600 mt-2">Bulan berjalan</p>
+            <p class="text-xs text-slate-400 mt-1">Diperbarui: {{ now()->format('H:i') }}</p>
+        </div>
+
+        {{-- Produk Aktif --}}
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-5">
             <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Produk Aktif</p>
             <p class="text-2xl font-bold text-slate-900 leading-tight">
                 {{ $totalProdukAktif }} <span class="text-sm font-medium text-slate-500">Produk</span>
             </p>
             <p class="text-xs text-slate-500 mt-2">{{ $totalVarianAktif }} varian tersedia</p>
-            <p class="text-xs text-slate-400 mt-1">Last updated: {{ now()->format('H:i') }}</p>
+            <p class="text-xs text-slate-400 mt-1">Diperbarui: {{ now()->format('H:i') }}</p>
         </div>
 
+        {{-- Bahan Baku --}}
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-5">
             <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Bahan Baku Aktif</p>
             <p class="text-2xl font-bold text-slate-900 leading-tight">
@@ -79,16 +97,7 @@
             @else
                 <p class="text-xs font-medium text-emerald-600 mt-2">✓ Semua aman</p>
             @endif
-            <p class="text-xs text-slate-400 mt-1">Last updated: {{ now()->format('H:i') }}</p>
-        </div>
-
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-5">
-            <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Kategori Produk</p>
-            <p class="text-2xl font-bold text-slate-900 leading-tight">
-                {{ $totalKategori }} <span class="text-sm font-medium text-slate-500">Kategori</span>
-            </p>
-            <p class="text-xs font-medium text-emerald-600 mt-2">✓ Aktif</p>
-            <p class="text-xs text-slate-400 mt-1">Last updated: {{ now()->format('H:i') }}</p>
+            <p class="text-xs text-slate-400 mt-1">Diperbarui: {{ now()->format('H:i') }}</p>
         </div>
     </div>
 
@@ -99,7 +108,8 @@
             <a href="{{ route('app.penjualan.index') }}"
                class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Lihat semua →</a>
         </div>
-        <table class="w-full">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[640px]">
             <thead class="bg-slate-50">
                 <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                     <th class="px-6 py-3 font-medium">Tanggal</th>
@@ -121,12 +131,14 @@
                 @empty
                     <tr>
                         <td colspan="4" class="px-6 py-10 text-center text-sm text-slate-400">
-                            Belum ada transaksi. <a href="{{ route('app.penjualan.create') }}" class="text-emerald-600 hover:underline">Catat sekarang.</a>
+                            Belum ada transaksi.
+                            <a href="{{ route('app.penjualan.create') }}" class="text-emerald-600 hover:underline">Catat sekarang.</a>
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 
 </x-layouts.admin>

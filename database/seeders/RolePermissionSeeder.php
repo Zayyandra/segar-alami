@@ -1,5 +1,4 @@
 <?php
-
 namespace Database\Seeders;
 
 use App\Models\User;
@@ -17,15 +16,15 @@ class RolePermissionSeeder extends Seeder
 
         // Owner
         $owner = User::firstOrCreate(
-            ['email' => 'owner@segar.test'],
-            ['name' => 'Owner Segar Alami', 'password' => Hash::make('password')]
+            ['email' => 'owner@segaralami.com'],
+            ['name' => 'Nofa Maiyuhalmuna', 'password' => Hash::make('password8')]
         );
         $owner->syncRoles(['owner']);
 
         // Admin
         $admin = User::firstOrCreate(
-            ['email' => 'admin@segar.test'],
-            ['name' => 'Admin Segar Alami', 'password' => Hash::make('password')]
+            ['email' => 'admin@segaralami.com'],
+            ['name' => 'Nadia Indira Kirana', 'password' => Hash::make('password8')]
         );
         $admin->syncRoles(['admin']);
     }

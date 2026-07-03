@@ -13,7 +13,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolePermissionSeeder::class,
             SegarAlamiSeeder::class,
-            PenjualanSeeder::class, // ← tambah ini
+            PenjualanSeeder::class,
+            PersediaanSeeder::class, // ← tambah ini, harus urutan terakhir
         ]);
     }
 }

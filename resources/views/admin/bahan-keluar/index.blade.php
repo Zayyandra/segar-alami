@@ -65,7 +65,7 @@
                                 <div class="inline-flex items-center gap-3">
                                     <a href="{{ route('app.bahan-keluar.edit', $item) }}" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Edit</a>
                                     <form method="POST" action="{{ route('app.bahan-keluar.destroy', $item) }}" class="inline"
-                                          onsubmit="return confirm('Hapus? Stok akan dikembalikan {{ number_format($item->jumlah, 0) }} {{ $item->bahanBaku->satuan }}.')">
+                                          data-confirm="Hapus? Stok akan dikembalikan {{ number_format($item->jumlah, 0) }} {{ $item->bahanBaku->satuan }}.">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="text-sm font-medium text-red-500 hover:text-red-600">Hapus</button>
                                     </form>

@@ -7,6 +7,7 @@ use App\Models\BahanBaku;
 use App\Models\BahanKeluar;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class BahanKeluarController extends Controller
@@ -47,19 +48,20 @@ class BahanKeluarController extends Controller
             'keterangan'    => 'nullable|string',
         ]);
 
-        // Cek stok cukup
         $bahanBaku = BahanBaku::findOrFail($validated['bahan_baku_id']);
         if ($bahanBaku->stok_saat_ini < $validated['jumlah']) {
             return back()->withErrors([
-                'jumlah' => "Stok tidak cukup. Stok tersedia: {$bahanBaku->stok_saat_ini} {$bahanBaku->satuan}."
+                'jumlah' => "Stok tidak cukup. Stok tersedia: {$bahanBaku->stok_saat_ini} {$bahanBaku->satuan}.",
             ])->withInput();
         }
 
         $validated['user_id'] = auth()->id();
 
-        BahanKeluar::create($validated);
-
-        $bahanBaku->decrement('stok_saat_ini', $validated['jumlah']);
+        DB::transaction(function () use ($validated) {
+            BahanKeluar::create($validated);
+            BahanBaku::where('id', $validated['bahan_baku_id'])
+                ->decrement('stok_saat_ini', $validated['jumlah']);
+        });
 
         return redirect()->route('app.bahan-keluar.index')
             ->with('success', 'Bahan keluar berhasil dicatat dan stok telah dikurangi.');
@@ -82,37 +84,46 @@ class BahanKeluarController extends Controller
         ]);
 
         $oldBahanBakuId = $bahanKeluar->bahan_baku_id;
-        $oldJumlah      = $bahanKeluar->jumlah;
-        $newBahanBakuId = $validated['bahan_baku_id'];
-        $newJumlah      = $validated['jumlah'];
+        $oldJumlah      = (float) $bahanKeluar->jumlah;
+        $newBahanBakuId = (int) $validated['bahan_baku_id'];
+        $newJumlah      = (float) $validated['jumlah'];
 
+        // Validasi ketersediaan stok DULU, sebelum menyentuh database
         if ($oldBahanBakuId != $newBahanBakuId) {
-            // Kembalikan stok bahan baku lama
-            BahanBaku::where('id', $oldBahanBakuId)->increment('stok_saat_ini', $oldJumlah);
-            // Cek stok bahan baku baru
             $bahanBakuBaru = BahanBaku::findOrFail($newBahanBakuId);
             if ($bahanBakuBaru->stok_saat_ini < $newJumlah) {
-                // Rollback
-                BahanBaku::where('id', $oldBahanBakuId)->decrement('stok_saat_ini', $oldJumlah);
                 return back()->withErrors([
-                    'jumlah' => "Stok tidak cukup. Stok tersedia: {$bahanBakuBaru->stok_saat_ini} {$bahanBakuBaru->satuan}."
+                    'jumlah' => "Stok tidak cukup. Stok tersedia: {$bahanBakuBaru->stok_saat_ini} {$bahanBakuBaru->satuan}.",
                 ])->withInput();
             }
-            BahanBaku::where('id', $newBahanBakuId)->decrement('stok_saat_ini', $newJumlah);
         } else {
             $selisih = $newJumlah - $oldJumlah;
             if ($selisih > 0) {
                 $bahanBaku = BahanBaku::findOrFail($newBahanBakuId);
                 if ($bahanBaku->stok_saat_ini < $selisih) {
                     return back()->withErrors([
-                        'jumlah' => "Stok tidak cukup untuk penambahan ini. Stok tersedia: {$bahanBaku->stok_saat_ini} {$bahanBaku->satuan}."
+                        'jumlah' => "Stok tidak cukup untuk penambahan ini. Stok tersedia: {$bahanBaku->stok_saat_ini} {$bahanBaku->satuan}.",
                     ])->withInput();
                 }
             }
-            BahanBaku::where('id', $newBahanBakuId)->increment('stok_saat_ini', -$selisih);
         }
 
-        $bahanKeluar->update($validated);
+        DB::transaction(function () use ($validated, $bahanKeluar, $oldBahanBakuId, $oldJumlah, $newBahanBakuId, $newJumlah) {
+            if ($oldBahanBakuId != $newBahanBakuId) {
+                // Kembalikan stok bahan lama, kurangi stok bahan baru
+                BahanBaku::where('id', $oldBahanBakuId)->increment('stok_saat_ini', $oldJumlah);
+                BahanBaku::where('id', $newBahanBakuId)->decrement('stok_saat_ini', $newJumlah);
+            } else {
+                $selisih = $newJumlah - $oldJumlah;
+                if ($selisih > 0) {
+                    BahanBaku::where('id', $newBahanBakuId)->decrement('stok_saat_ini', $selisih);
+                } elseif ($selisih < 0) {
+                    BahanBaku::where('id', $newBahanBakuId)->increment('stok_saat_ini', abs($selisih));
+                }
+            }
+
+            $bahanKeluar->update($validated);
+        });
 
         return redirect()->route('app.bahan-keluar.index')
             ->with('success', 'Data bahan keluar berhasil diperbarui.');
@@ -120,11 +131,11 @@ class BahanKeluarController extends Controller
 
     public function destroy(BahanKeluar $bahanKeluar): RedirectResponse
     {
-        // Kembalikan stok
-        BahanBaku::where('id', $bahanKeluar->bahan_baku_id)
-            ->increment('stok_saat_ini', $bahanKeluar->jumlah);
-
-        $bahanKeluar->delete();
+        DB::transaction(function () use ($bahanKeluar) {
+            BahanBaku::where('id', $bahanKeluar->bahan_baku_id)
+                ->increment('stok_saat_ini', $bahanKeluar->jumlah);
+            $bahanKeluar->delete();
+        });
 
         return redirect()->route('app.bahan-keluar.index')
             ->with('success', 'Data bahan keluar dihapus dan stok telah dikembalikan.');

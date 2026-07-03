@@ -18,7 +18,8 @@
                 </div>
             </div>
 
-            <table class="w-full">
+            <div class="overflow-x-auto">
+            <table class="w-full min-w-[560px]">
                 <thead class="bg-slate-50">
                     <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                         <th class="px-6 py-3 font-medium">Produk</th>
@@ -58,6 +59,7 @@
                     </tr>
                 </tfoot>
             </table>
+            </div>
 
             <div class="px-8 py-4 border-t border-slate-100 flex justify-end gap-3">
                 <a href="{{ route('app.penjualan.index') }}"
@@ -69,6 +71,39 @@
                     Edit Transaksi
                 </a>
             </div>
+        </div>
+
+        {{-- Estimasi Pemakaian Bahan Baku --}}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-8 py-5 border-b border-slate-100">
+                <p class="text-sm font-semibold text-slate-700">Estimasi Pemakaian Bahan Baku</p>
+                <p class="text-xs text-slate-400 mt-0.5">Dihitung otomatis berdasarkan rasio konversi produk</p>
+            </div>
+
+            @if(count($estimasi) > 0)
+                <table class="w-full">
+                    <thead class="bg-slate-50">
+                        <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                            <th class="px-6 py-3 font-medium">Bahan Baku</th>
+                            <th class="px-6 py-3 font-medium text-right">Estimasi Terpakai</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($estimasi as $item)
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-slate-700">{{ $item['nama'] }}</td>
+                                <td class="px-6 py-4 text-right text-sm font-medium text-slate-900 tabular-nums">
+                                    {{ number_format($item['total'], 2) }} {{ $item['satuan'] }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="px-8 py-5 text-sm text-slate-400">
+                    Belum ada data konversi untuk produk-produk di transaksi ini.
+                </div>
+            @endif
         </div>
 
     </div>

@@ -7,7 +7,6 @@ use App\Models\Penjualan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class LaporanPenjualanController extends Controller
@@ -24,37 +23,16 @@ class LaporanPenjualanController extends Controller
 
         $totalPendapatan = Penjualan::whereBetween('tanggal', [$start, $end])->sum('total');
         $totalTransaksi  = Penjualan::whereBetween('tanggal', [$start, $end])->count();
-        $rataPerHari     = $totalTransaksi > 0 ? $totalPendapatan / $start->daysInMonth : 0;
+        $rataPerHari     = $start->daysInMonth > 0 ? $totalPendapatan / $start->daysInMonth : 0;
 
-        $trenHarian = Penjualan::whereBetween('tanggal', [$start, $end])
-            ->selectRaw('DATE(tanggal) as tgl, SUM(total) as total')
-            ->groupBy('tgl')->orderBy('tgl')->get()->keyBy('tgl');
-
-        $days = []; $totals = [];
-        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            $key = $d->format('Y-m-d');
-            $days[]   = $d->format('d');
-            $totals[] = isset($trenHarian[$key]) ? (float) $trenHarian[$key]->total : 0;
-        }
-
-        $produkTerlaris = DB::table('detail_penjualan')
-            ->join('penjualan', 'detail_penjualan.penjualan_id', '=', 'penjualan.id')
-            ->join('varian_produk', 'detail_penjualan.varian_produk_id', '=', 'varian_produk.id')
-            ->join('produk', 'varian_produk.produk_id', '=', 'produk.id')
-            ->join('kategori', 'produk.kategori_id', '=', 'kategori.id')
-            ->whereBetween('penjualan.tanggal', [$start, $end])
-            ->selectRaw('CONCAT(produk.nama, " - ", varian_produk.nama_varian) as nama, kategori.nama as kategori, SUM(detail_penjualan.jumlah) as total_unit, SUM(detail_penjualan.sub_total) as total_pendapatan')
-            ->groupBy('produk.id', 'varian_produk.id', 'produk.nama', 'varian_produk.nama_varian', 'kategori.nama')
-            ->orderByDesc('total_unit')->limit(10)->get();
-
-        $totalUnit  = $produkTerlaris->sum('total_unit');
         $transaksis = Penjualan::with('user')
             ->whereBetween('tanggal', [$start, $end])
-            ->latest('tanggal')->paginate(10)->withQueryString();
+            ->latest('tanggal')
+            ->paginate(15)
+            ->withQueryString();
 
         return view('owner.laporan-penjualan', compact(
-            'bulan', 'start', 'totalPendapatan', 'totalTransaksi',
-            'rataPerHari', 'days', 'totals', 'produkTerlaris', 'totalUnit', 'transaksis'
+            'bulan', 'start', 'end', 'totalPendapatan', 'totalTransaksi', 'rataPerHari', 'transaksis'
         ));
     }
 
@@ -70,24 +48,15 @@ class LaporanPenjualanController extends Controller
 
         $totalPendapatan = Penjualan::whereBetween('tanggal', [$start, $end])->sum('total');
         $totalTransaksi  = Penjualan::whereBetween('tanggal', [$start, $end])->count();
-        $rataPerHari     = $totalTransaksi > 0 ? $totalPendapatan / $start->daysInMonth : 0;
-
-        $produkTerlaris = DB::table('detail_penjualan')
-            ->join('penjualan', 'detail_penjualan.penjualan_id', '=', 'penjualan.id')
-            ->join('varian_produk', 'detail_penjualan.varian_produk_id', '=', 'varian_produk.id')
-            ->join('produk', 'varian_produk.produk_id', '=', 'produk.id')
-            ->whereBetween('penjualan.tanggal', [$start, $end])
-            ->selectRaw('CONCAT(produk.nama, " - ", varian_produk.nama_varian) as nama, SUM(detail_penjualan.jumlah) as total_unit, SUM(detail_penjualan.sub_total) as total_pendapatan')
-            ->groupBy('produk.id', 'varian_produk.id', 'produk.nama', 'varian_produk.nama_varian')
-            ->orderByDesc('total_unit')->limit(10)->get();
+        $rataPerHari     = $start->daysInMonth > 0 ? $totalPendapatan / $start->daysInMonth : 0;
 
         $transaksis = Penjualan::with('user')
             ->whereBetween('tanggal', [$start, $end])
-            ->latest('tanggal')->get();
+            ->latest('tanggal')
+            ->get();
 
         $pdf = Pdf::loadView('owner.pdf.laporan-penjualan', compact(
-            'start', 'end', 'totalPendapatan', 'totalTransaksi',
-            'rataPerHari', 'transaksis', 'produkTerlaris'
+            'start', 'end', 'totalPendapatan', 'totalTransaksi', 'rataPerHari', 'transaksis'
         ))->setPaper('a4', 'portrait');
 
         return $pdf->download('laporan-penjualan-' . $start->format('Y-m') . '.pdf');

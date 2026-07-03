@@ -208,7 +208,7 @@ class SegarAlamiSeeder extends Seeder
         $bahanBakuData = [
             ['nama' => 'Kacang Kedelai',  'satuan' => 'kg',  'kategori_bb' => 'utama',     'stok_saat_ini' => 50,  'stok_minimum' => 10, 'harga_per_satuan' => 15000],
             ['nama' => 'Gula Pasir',      'satuan' => 'kg',  'kategori_bb' => 'utama',     'stok_saat_ini' => 30,  'stok_minimum' => 5,  'harga_per_satuan' => 14000],
-            ['nama' => 'Daun Pandan',     'satuan' => 'ikat','kategori_bb' => 'utama',     'stok_saat_ini' => 10,  'stok_minimum' => 3,  'harga_per_satuan' => 3000],
+            ['nama' => 'Daun Pandan',     'satuan' => 'ikat','kategori_bb' => 'pendukung',     'stok_saat_ini' => 10,  'stok_minimum' => 3,  'harga_per_satuan' => 3000],
             ['nama' => 'Tepung Biang',    'satuan' => 'kg',  'kategori_bb' => 'utama',     'stok_saat_ini' => 5,   'stok_minimum' => 2,  'harga_per_satuan' => 20000],
             ['nama' => 'Soka',            'satuan' => 'kg',  'kategori_bb' => 'utama',     'stok_saat_ini' => 3,   'stok_minimum' => 1,  'harga_per_satuan' => 25000],
             ['nama' => 'Pisang',          'satuan' => 'sisir','kategori_bb' => 'pendukung', 'stok_saat_ini' => 8,   'stok_minimum' => 2,  'harga_per_satuan' => 15000],

@@ -19,31 +19,50 @@ class BahanBakuController extends Controller
             $query->where('nama', 'like', "%{$search}%");
         }
 
-        if ($kategori = $request->input('kategori_bb')) {
+        $kategori = $request->input('kategori_bb', 'utama');
+        if ($kategori !== 'semua') {
             $query->where('kategori_bb', $kategori);
         }
 
         $bahanBakus = $query->paginate(15)->withQueryString();
 
+        $allUtama = BahanBaku::where('is_active', true)->where('kategori_bb', 'utama')->get();
+
+        // Hitung SS/ROP sekaligus: item yang tampil + semua bahan utama (2 query total)
+        $ids = $bahanBakus->getCollection()->pluck('id')
+            ->merge($allUtama->pluck('id'))
+            ->unique();
+
+        $batch  = BahanBaku::ssRopBatch($ids);
+        $kosong = ['ss' => null, 'rop' => null, 'D' => null, 'Dmax' => null, 'L' => null, 'Lmax' => null];
+
         $ssRopData = [];
         foreach ($bahanBakus as $item) {
-            if ($item->tracking_ss_rop) {
-                $ssRopData[$item->id] = $item->hitungSsRop();
+            $ssRopData[$item->id] = $batch[$item->id] ?? $kosong;
+        }
+
+        // Stat cards berdasarkan bahan baku UTAMA, threshold = SS dari rumus
+        $totalBB     = $allUtama->count();
+        $totalAman   = 0;
+        $totalKritis = 0;
+
+        foreach ($allUtama as $bb) {
+            $sr = $batch[$bb->id] ?? $kosong;
+            if ($sr['ss'] !== null && $bb->stok_saat_ini <= $sr['ss']) {
+                $totalKritis++;
+            } else {
+                $totalAman++;
             }
         }
 
-        $totalBB     = BahanBaku::where('is_active', true)->count();
-        $totalAman   = BahanBaku::where('is_active', true)->whereColumn('stok_saat_ini', '>', 'stok_minimum')->count();
-        $totalKritis = BahanBaku::where('is_active', true)->whereColumn('stok_saat_ini', '<=', 'stok_minimum')->count();
-
         return view('admin.bahan-baku.index', compact(
-            'bahanBakus', 'ssRopData', 'totalBB', 'totalAman', 'totalKritis'
+            'bahanBakus', 'ssRopData', 'totalBB', 'totalAman', 'totalKritis', 'kategori'
         ));
     }
 
     public function create(): View
     {
-        $bahanBaku = new BahanBaku(['is_active' => true, 'tracking_ss_rop' => false]);
+        $bahanBaku = new BahanBaku(['is_active' => true]);
         return view('admin.bahan-baku.create', compact('bahanBaku'));
     }
 
@@ -66,7 +85,7 @@ class BahanBakuController extends Controller
             ->with('success', 'Bahan baku berhasil diperbarui.');
     }
 
-    public function destroy(BahanBaku $bahanBaku)
+    public function destroy(BahanBaku $bahanBaku): RedirectResponse
     {
         if ($bahanBaku->bahanMasuk()->exists() || $bahanBaku->bahanKeluar()->exists()) {
             return redirect()->route('app.bahan-baku.index')

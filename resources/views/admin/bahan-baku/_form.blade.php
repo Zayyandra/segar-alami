@@ -62,7 +62,7 @@
 
     <div class="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
         <h3 class="text-sm font-semibold text-slate-700 mb-3">Data Persediaan</h3>
-        <div class="grid gap-4 md:grid-cols-3">
+        <div class="grid gap-4 md:grid-cols-2">
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Stok Saat Ini</label>
                 <div class="relative">
@@ -78,21 +78,6 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">Stok Minimum</label>
-                <div class="relative">
-                    <input type="number" name="stok_minimum"
-                        value="{{ old('stok_minimum', $bahanBaku->stok_minimum ?? 0) }}" min="0" step="0.01"
-                        placeholder="0"
-                        class="w-full rounded-lg border border-slate-200 px-3 py-2.5 pr-16 text-sm
-                               focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none">
-                    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                        {{ $bahanBaku->satuan ?? 'satuan' }}
-                    </span>
-                </div>
-                <p class="mt-1 text-xs text-slate-400">Batas minimum sebelum restock</p>
-            </div>
-
-            <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Harga per Satuan</label>
                 <div class="relative">
                     <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">Rp</span>
@@ -104,23 +89,9 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
-        <div class="flex items-start gap-3">
-            <input type="hidden" name="tracking_ss_rop" value="0">
-            <input type="checkbox" name="tracking_ss_rop" id="tracking_ss_rop" value="1"
-                @checked(old('tracking_ss_rop', $bahanBaku->tracking_ss_rop))
-                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600">
-            <div>
-                <label for="tracking_ss_rop" class="text-sm font-medium text-slate-700 cursor-pointer">
-                    Aktifkan Tracking Safety Stock & ROP
-                </label>
-                <p class="text-xs text-slate-400 mt-0.5">
-                    Sistem akan menghitung Safety Stock dan Reorder Point otomatis dari riwayat pemakaian dan pengadaan bahan baku ini.
-                </p>
-            </div>
-        </div>
+        <p class="mt-3 text-xs text-slate-400">
+            Stok Minimum (Safety Stock) dan ROP dihitung otomatis oleh sistem dari data pemakaian (bahan keluar) dan lead time (bahan masuk).
+        </p>
     </div>
 
     <div class="flex items-center gap-3">

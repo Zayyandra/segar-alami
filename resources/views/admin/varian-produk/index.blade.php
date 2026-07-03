@@ -67,7 +67,7 @@
                                 <div class="inline-flex items-center gap-3">
                                     <a href="{{ route('app.varian-produk.edit', $v) }}" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Edit</a>
                                     <form method="POST" action="{{ route('app.varian-produk.destroy', $v) }}" class="inline"
-                                          onsubmit="return confirm('Hapus varian {{ $v->nama_varian }}?')">
+                                          data-confirm="Hapus varian {{ $v->nama_varian }}?">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="text-sm font-medium text-red-500 hover:text-red-600">Hapus</button>
                                     </form>

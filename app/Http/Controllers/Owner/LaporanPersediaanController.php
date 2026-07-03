@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
@@ -12,42 +11,58 @@ class LaporanPersediaanController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = BahanBaku::where('is_active', true);
+        $all    = BahanBaku::where('is_active', true)->orderBy('nama')->get();
+        $allIds = $all->pluck('id')->toArray();
+        $batch  = BahanBaku::ssRopBatch($allIds);
+        $kosong = ['ss' => null, 'rop' => null];
 
-        if ($search = trim((string) $request->input('q'))) {
-            $query->where('nama', 'like', "%{$search}%");
-        }
+        // Hitung stat card pakai SS (sama dengan admin)
+        $totalJenis   = $all->count();
+        $jumlahAman   = $all->filter(fn($b) => ($batch[$b->id] ?? $kosong)['ss'] !== null && $b->stok_saat_ini > ($batch[$b->id]['ss']))->count();
+        $jumlahKritis = $all->filter(fn($b) => ($batch[$b->id] ?? $kosong)['ss'] !== null && $b->stok_saat_ini <= ($batch[$b->id]['ss']))->count();
+        $totalNilai   = $all->sum(fn($b) => $b->stok_saat_ini * $b->harga_per_satuan);
 
-        if ($status = $request->input('status')) {
-            if ($status === 'aman') {
-                $query->whereRaw('stok_saat_ini > stok_minimum');
-            } elseif ($status === 'kritis') {
-                $query->whereRaw('stok_saat_ini <= stok_minimum AND stok_minimum > 0');
-            }
-        }
+        // Filter status pakai SS juga
+        // Filter status pakai SS juga
+        $search   = trim((string) $request->input('q'));
+        $status   = $request->input('status');
+        $kategori = $request->input('kategori', 'utama'); // ← default 'utama'
 
-        $bahanBakus  = $query->orderBy('nama')->paginate(15)->withQueryString();
-        $all         = BahanBaku::where('is_active', true)->get();
-        $totalJenis  = $all->count();
-        $jumlahAman  = $all->filter(fn ($b) => $b->stok_minimum > 0 && $b->stok_saat_ini > $b->stok_minimum)->count();
-        $jumlahKritis= $all->filter(fn ($b) => $b->stok_minimum > 0 && $b->stok_saat_ini <= $b->stok_minimum)->count();
-        $totalNilai  = $all->sum(fn ($b) => $b->stok_saat_ini * $b->harga_per_satuan);
+        $filtered = $all
+            ->when($search, fn($c) => $c->filter(fn($b) => str_contains(strtolower($b->nama), strtolower($search))))
+            ->when($kategori, fn($c) => $c->filter(fn($b) => $b->kategori_bb === $kategori)) // ← filter kategori
+            ->when($status === 'aman', fn($c) => $c->filter(fn($b) => ($batch[$b->id] ?? $kosong)['ss'] !== null && $b->stok_saat_ini > $batch[$b->id]['ss']))
+            ->when($status === 'kritis', fn($c) => $c->filter(fn($b) => ($batch[$b->id] ?? $kosong)['ss'] !== null && $b->stok_saat_ini <= $batch[$b->id]['ss']))
+            ->values();
+
+        // Manual paginate
+        $page       = $request->input('page', 1);
+        $perPage    = 15;
+        $bahanBakus = new \Illuminate\Pagination\LengthAwarePaginator(
+            $filtered->slice(($page - 1) * $perPage, $perPage)->values(),
+            $filtered->count(), $perPage, $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return view('owner.laporan-persediaan', compact(
-            'bahanBakus', 'totalJenis', 'jumlahAman', 'jumlahKritis', 'totalNilai'
+            'bahanBakus', 'batch', 'kategori', 'totalJenis', 'jumlahAman', 'jumlahKritis', 'totalNilai'
         ));
     }
 
     public function exportPdf()
     {
-        $bahanBakus  = BahanBaku::where('is_active', true)->orderBy('nama')->get();
-        $totalJenis  = $bahanBakus->count();
-        $jumlahAman  = $bahanBakus->filter(fn ($b) => $b->stok_minimum > 0 && $b->stok_saat_ini > $b->stok_minimum)->count();
-        $jumlahKritis= $bahanBakus->filter(fn ($b) => $b->stok_minimum > 0 && $b->stok_saat_ini <= $b->stok_minimum)->count();
-        $totalNilai  = $bahanBakus->sum(fn ($b) => $b->stok_saat_ini * $b->harga_per_satuan);
+        $bahanBakus = BahanBaku::where('is_active', true)->orderBy('nama')->get();
+        $allIds     = $bahanBakus->pluck('id')->toArray();
+        $batch      = BahanBaku::ssRopBatch($allIds);
+        $kosong     = ['ss' => null, 'rop' => null];
+
+        $totalJenis   = $bahanBakus->count();
+        $jumlahAman   = $bahanBakus->filter(fn($b) => ($batch[$b->id] ?? $kosong)['ss'] !== null && $b->stok_saat_ini > $batch[$b->id]['ss'])->count();
+        $jumlahKritis = $bahanBakus->filter(fn($b) => ($batch[$b->id] ?? $kosong)['ss'] !== null && $b->stok_saat_ini <= $batch[$b->id]['ss'])->count();
+        $totalNilai   = $bahanBakus->sum(fn($b) => $b->stok_saat_ini * $b->harga_per_satuan);
 
         $pdf = Pdf::loadView('owner.pdf.laporan-persediaan', compact(
-            'bahanBakus', 'totalJenis', 'jumlahAman', 'jumlahKritis', 'totalNilai'
+            'bahanBakus', 'batch', 'totalJenis', 'jumlahAman', 'jumlahKritis', 'totalNilai'
         ))->setPaper('a4', 'portrait');
 
         return $pdf->download('laporan-persediaan-' . now()->format('Y-m-d') . '.pdf');

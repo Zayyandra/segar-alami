@@ -22,10 +22,8 @@
             </div>
             <div>
                 <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Produk Terjual Hari Ini</p>
-                <p class="text-2xl font-bold text-slate-900">{{ number_format($totalProdukTerjual ?? 0, 0, ',', '.') }} <span class="text-sm font-normal text-slate-400">Items</span></p>
-                <p class="text-xs text-blue-600 font-medium mt-1">
-                    {{ ($totalProdukTerjual ?? 0) > 0 ? 'Bulan ini' : 'Belum ada penjualan' }}
-                </p>
+                <p class="text-2xl font-bold text-slate-900">{{ number_format($totalProdukTerjual ?? 0, 0, ',', '.') }} <span class="text-sm font-normal text-slate-400">Item</span></p>
+                <p class="text-xs text-blue-600 font-medium mt-1">{{ now()->translatedFormat('d F Y') }}</p>
             </div>
         </div>
     </div>
@@ -33,12 +31,12 @@
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-                <h3 class="text-sm font-bold text-slate-900">Log Transaksi</h3>
+                <h3 class="text-sm font-bold text-slate-900">Daftar Transaksi</h3>
                 <p class="text-xs text-slate-400 mt-0.5">{{ now()->translatedFormat('d F Y') }}</p>
             </div>
             <a href="{{ route('app.penjualan.create') }}"
                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition">
-                + Tambah Data Penjualan
+                + Catat Penjualan
             </a>
         </div>
 
@@ -48,7 +46,7 @@
                     <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
                     </svg>
-                    <input type="search" name="q" value="{{ request('q') }}" placeholder="Cari transaksi..."
+                    <input type="search" name="q" value="{{ request('q') }}" placeholder="Cari keterangan transaksi..."
                            class="w-full pl-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none">
                 </div>
                 <input type="date" name="tanggal" value="{{ request('tanggal') }}" onchange="this.form.submit()"
@@ -81,12 +79,10 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="inline-flex items-center gap-3">
-                                    <a href="{{ route('app.penjualan.show', $item) }}" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Detail</a>
-                                    <form method="POST" action="{{ route('app.penjualan.destroy', $item) }}" class="inline"
-                                          onsubmit="return confirm('Hapus transaksi ini?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="text-sm font-medium text-red-500 hover:text-red-600">Hapus</button>
-                                    </form>
+                                    <a href="{{ route('app.penjualan.show', $item) }}"
+                                       class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Detail</a>
+                                    <a href="{{ route('app.penjualan.edit', $item) }}"
+                                       class="text-sm font-medium text-blue-600 hover:text-blue-700">Edit</a>
                                 </div>
                             </td>
                         </tr>

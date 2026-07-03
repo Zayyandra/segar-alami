@@ -14,7 +14,9 @@
       "Bash(php vendor/bin/pint routes/web.php app/Http/Controllers/Admin/KonversiProdukController.php)",
       "PowerShell(php artisan test --filter=KonversiProduk 2>&1)",
       "PowerShell(php artisan test 2>&1)",
-      "PowerShell(./vendor/bin/pint resources/views/ --test 2>&1)"
+      "PowerShell(./vendor/bin/pint resources/views/ --test 2>&1)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\ACER\\\\Herd\\\\segar-alami\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)"
     ]
   }
 }
