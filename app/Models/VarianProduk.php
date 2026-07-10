@@ -17,11 +17,13 @@ class VarianProduk extends Model
         'nama_varian',
         'ukuran',
         'harga',
+        'stok',
         'is_active',
     ];
 
     protected $casts = [
         'harga'     => 'decimal:2',
+        'stok'      => 'integer',
         'is_active' => 'boolean',
     ];
 

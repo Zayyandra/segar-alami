@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PenjualanController extends Controller
@@ -75,7 +76,30 @@ class PenjualanController extends Controller
             'tanggal.before_or_equal'           => 'Tanggal tidak boleh melebihi hari ini.',
         ]);
 
-        DB::transaction(function () use ($request) {
+        // Validasi stok tersedia SEBELUM masuk transaksi DB, sambil digabung
+        // per varian (kalau varian yang sama muncul >1 kali dalam 1 transaksi).
+        $totalPerVarian = [];
+        foreach ($request->items as $item) {
+            $id = $item['varian_produk_id'];
+            $totalPerVarian[$id] = ($totalPerVarian[$id] ?? 0) + $item['jumlah'];
+        }
+
+        $variansTerpakai = VarianProduk::with('produk:id,nama')
+            ->whereIn('id', array_keys($totalPerVarian))
+            ->get()
+            ->keyBy('id');
+
+        foreach ($totalPerVarian as $varianId => $jumlahDiminta) {
+            $varian = $variansTerpakai->get($varianId);
+            if ($varian && $varian->stok < $jumlahDiminta) {
+                throw ValidationException::withMessages([
+                    'items' => "Stok {$varian->produk->nama} - {$varian->nama_varian} tidak cukup. "
+                        . "Stok tersedia: {$varian->stok}, diminta: {$jumlahDiminta}.",
+                ]);
+            }
+        }
+
+        DB::transaction(function () use ($request, $totalPerVarian) {
             $total = 0;
             $items = [];
 
@@ -98,6 +122,11 @@ class PenjualanController extends Controller
             ]);
 
             $penjualan->details()->createMany($items);
+
+            // Kurangi stok varian produk sesuai jumlah yang terjual
+            foreach ($totalPerVarian as $varianId => $jumlahTerjual) {
+                VarianProduk::where('id', $varianId)->decrement('stok', $jumlahTerjual);
+            }
         });
 
         $this->clearDashboardCache();
@@ -184,7 +213,54 @@ class PenjualanController extends Controller
             'tanggal.before_or_equal'           => 'Tanggal tidak boleh melebihi hari ini.',
         ]);
 
-        DB::transaction(function () use ($request, $penjualan) {
+        // Kembalikan dulu stok dari item LAMA (sebelum diedit), supaya
+        // perhitungan stok tersedia untuk validasi baru itu adil/akurat.
+        $penjualan->load('details');
+        $totalLamaPerVarian = [];
+        foreach ($penjualan->details as $detail) {
+            $id = $detail->varian_produk_id;
+            $totalLamaPerVarian[$id] = ($totalLamaPerVarian[$id] ?? 0) + $detail->jumlah;
+        }
+
+        $totalBaruPerVarian = [];
+        foreach ($request->items as $item) {
+            $id = $item['varian_produk_id'];
+            $totalBaruPerVarian[$id] = ($totalBaruPerVarian[$id] ?? 0) + $item['jumlah'];
+        }
+
+        $semuaVarianId = array_unique(array_merge(
+            array_keys($totalLamaPerVarian),
+            array_keys($totalBaruPerVarian)
+        ));
+
+        $variansTerpakai = VarianProduk::with('produk:id,nama')
+            ->whereIn('id', $semuaVarianId)
+            ->get()
+            ->keyBy('id');
+
+        // Validasi: stok_efektif = stok_sekarang + jumlah_lama (dikembalikan) - jumlah_baru (diminta)
+        foreach ($totalBaruPerVarian as $varianId => $jumlahBaru) {
+            $varian = $variansTerpakai->get($varianId);
+            if (!$varian) {
+                continue;
+            }
+            $jumlahLama   = $totalLamaPerVarian[$varianId] ?? 0;
+            $stokEfektif  = $varian->stok + $jumlahLama;
+
+            if ($stokEfektif < $jumlahBaru) {
+                throw ValidationException::withMessages([
+                    'items' => "Stok {$varian->produk->nama} - {$varian->nama_varian} tidak cukup. "
+                        . "Stok tersedia: {$stokEfektif}, diminta: {$jumlahBaru}.",
+                ]);
+            }
+        }
+
+        DB::transaction(function () use ($request, $penjualan, $totalLamaPerVarian, $totalBaruPerVarian) {
+            // Kembalikan stok lama
+            foreach ($totalLamaPerVarian as $varianId => $jumlahLama) {
+                VarianProduk::where('id', $varianId)->increment('stok', $jumlahLama);
+            }
+
             $total = 0;
             $items = [];
 
@@ -207,6 +283,11 @@ class PenjualanController extends Controller
 
             $penjualan->details()->delete();
             $penjualan->details()->createMany($items);
+
+            // Kurangi stok sesuai item baru
+            foreach ($totalBaruPerVarian as $varianId => $jumlahBaru) {
+                VarianProduk::where('id', $varianId)->decrement('stok', $jumlahBaru);
+            }
         });
 
         $this->clearDashboardCache();

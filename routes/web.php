@@ -61,13 +61,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->except(['show']);
 
         Route::resource('bahan-keluar', BahanKeluarController::class)
-            ->parameters(['bahan-keluar' => 'bahanKeluar'])
-            ->except(['show']);
+            ->parameters(['bahan-keluar' => 'bahanKeluar']);
 
         Route::resource('konversi-produk', KonversiProdukController::class)
             ->parameters(['konversi-produk' => 'konversiProduk'])
             ->except(['show']);
-
 
         Route::get('masa-simpan', [MasaSimpanController::class, 'index'])
             ->name('masa-simpan.index');

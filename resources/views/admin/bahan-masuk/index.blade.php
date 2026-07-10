@@ -40,6 +40,7 @@
             <table class="w-full">
                 <thead class="bg-slate-50">
                     <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                        <th class="px-6 py-3 font-medium">Kode Batch</th>
                         <th class="px-6 py-3 font-medium">Bahan Baku</th>
                         <th class="px-6 py-3 font-medium">Vendor / Supplier</th>
                         <th class="px-6 py-3 font-medium text-right">Jumlah</th>
@@ -60,6 +61,15 @@
                         @endphp
                         <tr
                             class="{{ $isKadaluarsa ? 'bg-red-100' : ($mendekati ? 'bg-amber-100' : 'hover:bg-slate-50/50') }}">
+                            <td class="px-6 py-4">
+                                @if ($item->kode_batch)
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 font-mono text-xs font-bold text-slate-700 tracking-wide">
+                                        {{ $item->kode_batch }}
+                                    </span>
+                                @else
+                                    <span class="text-slate-300 text-xs">—</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4">
                                 <p class="text-sm font-semibold text-slate-900">{{ $item->bahanBaku->nama }}</p>
                                 <p class="text-xs text-slate-400">{{ ucfirst($item->bahanBaku->kategori_bb) }}</p>
@@ -106,7 +116,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-16 text-center text-sm text-slate-400">
+                            <td colspan="8" class="px-6 py-16 text-center text-sm text-slate-400">
                                 Belum ada data bahan masuk.
                                 <a href="{{ route('app.bahan-masuk.create') }}"
                                     class="text-emerald-600 hover:underline">Catat sekarang.</a>

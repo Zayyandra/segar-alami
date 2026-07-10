@@ -7,6 +7,7 @@ use App\Models\BahanMasuk;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class BahanMasukController extends Controller
@@ -51,7 +52,11 @@ class BahanMasukController extends Controller
         ]);
 
         DB::transaction(function () use ($validated) {
-            $validated['user_id'] = auth()->id();
+            $bahanBaku = BahanBaku::findOrFail($validated['bahan_baku_id']);
+
+            $validated['user_id']    = auth()->id();
+            $validated['kode_batch'] = $this->generateKodeBatch($bahanBaku->nama, $validated['bahan_baku_id']);
+
             BahanMasuk::create($validated);
             BahanBaku::where('id', $validated['bahan_baku_id'])
                 ->increment('stok_saat_ini', $validated['jumlah']);
@@ -82,11 +87,16 @@ class BahanMasukController extends Controller
             if ($oldBahanBakuId != $newBahanBakuId) {
                 BahanBaku::where('id', $oldBahanBakuId)->decrement('stok_saat_ini', $oldJumlah);
                 BahanBaku::where('id', $newBahanBakuId)->increment('stok_saat_ini', $newJumlah);
+
+                // Bahan baku berubah -> kode batch lama tidak relevan lagi, generate ulang
+                $bahanBakuBaru = BahanBaku::findOrFail($newBahanBakuId);
+                $validated['kode_batch'] = $this->generateKodeBatch($bahanBakuBaru->nama, $newBahanBakuId);
             } else {
                 $selisih = $newJumlah - $oldJumlah;
                 if ($selisih != 0) {
                     BahanBaku::where('id', $newBahanBakuId)->increment('stok_saat_ini', $selisih);
                 }
+                // Bahan baku sama -> kode batch tetap dipertahankan (tidak digenerate ulang)
             }
 
             $bahanMasuk->update($validated);
@@ -107,10 +117,42 @@ class BahanMasukController extends Controller
         return redirect()->route('app.bahan-masuk.index')
             ->with('success', 'Data bahan masuk dihapus dan stok telah disesuaikan.');
     }
+
     public function edit(BahanMasuk $bahanMasuk): View
     {
         $bahanBakus = BahanBaku::where('is_active', true)->orderBy('nama')->get();
 
         return view('admin.bahan-masuk.edit', compact('bahanBakus', 'bahanMasuk'));
+    }
+
+    /**
+     * Generate kode batch unik untuk FEFO, format: XX-01, XX-02, dst
+     * dimana XX adalah 2 huruf awal setiap kata di nama bahan baku
+     * (contoh: "Kacang Kedelai" -> KK, "Gula Pasir" -> GP).
+     * Nomor urut dihitung per bahan_baku_id, bukan global.
+     */
+    private function generateKodeBatch(string $namaBahanBaku, int $bahanBakuId): string
+    {
+        $kata    = preg_split('/\s+/', trim($namaBahanBaku));
+        $inisial = '';
+        foreach ($kata as $k) {
+            $inisial .= Str::upper(Str::substr($k, 0, 1));
+        }
+        // Fallback kalau nama cuma 1 kata pendek: ambil 2 huruf pertama
+        if (Str::length($inisial) < 2) {
+            $inisial = Str::upper(Str::substr($namaBahanBaku, 0, 2));
+        }
+        $inisial = Str::substr($inisial, 0, 3); // maksimal 3 huruf biar tidak kepanjangan
+
+        $jumlahSebelumnya = BahanMasuk::where('bahan_baku_id', $bahanBakuId)->count();
+        $nomorUrut = $jumlahSebelumnya + 1;
+
+        do {
+            $kode = sprintf('%s-%02d', $inisial, $nomorUrut);
+            $sudahAda = BahanMasuk::where('kode_batch', $kode)->exists();
+            $nomorUrut++;
+        } while ($sudahAda);
+
+        return $kode;
     }
 }

@@ -12,9 +12,11 @@ use Illuminate\View\View;
 
 class VarianProdukController extends Controller
 {
+    private const SORTABLE_COLUMNS = ['stok', 'harga', 'nama_varian'];
+
     public function index(Request $request): View
     {
-        $query = VarianProduk::with('produk:id,nama')->latest('id');
+        $query = VarianProduk::with('produk:id,nama');
 
         if ($search = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($search) {
@@ -28,10 +30,19 @@ class VarianProdukController extends Controller
             $query->where('produk_id', $produkId);
         }
 
+        $sort = $request->input('sort');
+        $dir  = $request->input('dir') === 'asc' ? 'asc' : 'desc';
+
+        if ($sort && in_array($sort, self::SORTABLE_COLUMNS)) {
+            $query->orderBy($sort, $dir);
+        } else {
+            $query->latest('id');
+        }
+
         $variants = $query->paginate(15)->withQueryString();
         $produks  = Produk::orderBy('nama')->get(['id', 'nama']);
 
-        return view('admin.varian-produk.index', compact('variants', 'produks'));
+        return view('admin.varian-produk.index', compact('variants', 'produks', 'sort', 'dir'));
     }
 
     public function create(): View
@@ -70,7 +81,6 @@ class VarianProdukController extends Controller
 
     public function destroy(VarianProduk $varianProduk): RedirectResponse
     {
-        // Varian yang sudah punya riwayat penjualan tidak boleh dihapus
         if ($varianProduk->detailPenjualan()->exists()) {
             return redirect()
                 ->route('app.varian-produk.index')

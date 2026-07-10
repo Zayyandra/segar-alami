@@ -1,8 +1,6 @@
 <x-layouts.admin title="Laporan Masa Simpan" subtitle="Pemantauan masa simpan bahan baku berdasarkan metode FEFO (First Expired First Out).">
     <div class="space-y-6">
 
-        {{-- Header --}}
-
         {{-- Stat Cards --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <a href="{{ route('app.masa-simpan.index') }}"
@@ -38,8 +36,9 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-gray-100 bg-gray-50">
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Kode Batch</th>
                             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Bahan Baku</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Jumlah</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Sisa Stok Batch</th>
                             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tanggal Masuk</th>
                             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tanggal Kedaluwarsa</th>
                             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Sisa Hari</th>
@@ -50,17 +49,31 @@
                         @forelse ($items as $item)
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-4">
+                                    @if ($item->kode_batch)
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 font-mono text-xs font-bold text-slate-700">
+                                            {{ $item->kode_batch }}
+                                        </span>
+                                    @else
+                                        <span class="text-slate-300 text-xs">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
                                     <p class="font-medium text-gray-900">{{ $item->bahanBaku->nama }}</p>
                                     <p class="text-xs text-gray-400">{{ $item->bahanBaku->satuan }}</p>
                                 </td>
                                 <td class="px-6 py-4 text-gray-700">
-                                    {{ $item->jumlah }} {{ $item->bahanBaku->satuan }}
+                                    {{ number_format($item->sisa_jumlah ?? $item->jumlah, 2) }} {{ $item->bahanBaku->satuan }}
+                                    @if ($item->sisa_jumlah !== null && $item->sisa_jumlah < $item->jumlah)
+                                        <span class="text-xs text-slate-400">
+                                            (dari {{ number_format($item->jumlah, 2) }})
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-gray-600">
-                                    {{ \Carbon\Carbon::parse($item->tanggal_masuk)->format('d M Y') }}
+                                    {{ $item->tanggal->format('d M Y') }}
                                 </td>
                                 <td class="px-6 py-4 text-gray-600">
-                                    {{ \Carbon\Carbon::parse($item->tanggal_kadaluarsa)->format('d M Y') }}
+                                    {{ $item->tanggal_kadaluarsa->format('d M Y') }}
                                 </td>
                                 <td class="px-6 py-4 font-medium
                                     {{ $item->status === 'kadaluarsa' ? 'text-red-600' : ($item->status === 'mendekati' ? 'text-amber-600' : 'text-emerald-600') }}">
@@ -84,7 +97,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-gray-400">
+                                <td colspan="7" class="px-6 py-12 text-center text-gray-400">
                                     Tidak ada data bahan baku dengan filter ini.
                                 </td>
                             </tr>
