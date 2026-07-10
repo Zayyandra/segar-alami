@@ -28,6 +28,10 @@ class BahanBaku extends Model
     {
         return $this->hasMany(BahanMasuk::class, 'bahan_baku_id');
     }
+    public function koreksiStok(): HasMany
+    {
+        return $this->hasMany(KoreksiStok::class, 'bahan_baku_id');
+    }
 
     public function bahanKeluar(): HasMany
     {
@@ -134,4 +138,5 @@ class BahanBaku extends Model
 
         return $hasil;
     }
+
 }

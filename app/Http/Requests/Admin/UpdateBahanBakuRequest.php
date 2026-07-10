@@ -17,7 +17,6 @@ class UpdateBahanBakuRequest extends FormRequest
             'nama'             => ['required', 'string', 'max:100', Rule::unique('bahan_baku', 'nama')->ignore($this->route('bahanBaku'))],
             'satuan'           => ['required', 'string', 'max:20'],
             'kategori_bb'      => ['required', Rule::in(['utama', 'pendukung'])],
-            'stok_saat_ini'    => ['nullable', 'numeric', 'min:0'],
             'stok_minimum'     => ['nullable', 'numeric', 'min:0'],
             'harga_per_satuan' => ['nullable', 'numeric', 'min:0'],
             'tracking_ss_rop'  => ['nullable', 'boolean'],

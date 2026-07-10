@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BahanMasukController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\KonversiProdukController;
+use App\Http\Controllers\Admin\KoreksiStokController;
 use App\Http\Controllers\Admin\MasaSimpanController;
 use App\Http\Controllers\Admin\PenjualanController;
 use App\Http\Controllers\Admin\ProdukController;
@@ -43,6 +44,13 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::resource('bahan-baku', BahanBakuController::class)
             ->parameters(['bahan-baku' => 'bahanBaku'])
             ->except(['show']);
+
+        Route::get('bahan-baku/{bahanBaku}/koreksi-stok', [KoreksiStokController::class, 'create'])
+            ->name('koreksi-stok.create');
+        Route::post('bahan-baku/{bahanBaku}/koreksi-stok', [KoreksiStokController::class, 'store'])
+            ->name('koreksi-stok.store');
+        Route::get('bahan-baku/{bahanBaku}/koreksi-stok/riwayat', [KoreksiStokController::class, 'index'])
+            ->name('koreksi-stok.index');
 
         // Penjualan tidak bisa dihapus — destroy dihapus dari route
         Route::resource('penjualan', PenjualanController::class)
